@@ -1,0 +1,41 @@
+#include <stdio.h>
+#include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
+#include <sys/time.h>
+#include "esp_task_wdt.h"
+
+
+//A function to specify delays in milliseconds
+void delay_ms(int t) {
+    vTaskDelay(t /portTICK_PERIOD_MS);
+}
+#define LED_GPIO GPIO_NUM_10
+#define BUTTON GPIO_NUM_4
+
+
+void app_main(void)
+{
+    esp_task_wdt_add(NULL);
+    gpio_reset_pin(LED_GPIO);
+    gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
+    gpio_reset_pin(BUTTON);
+    gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
+    gpio_set_level(LED_GPIO, 0);
+    bool BSTATE = false;
+    bool LSTATE = false;
+
+
+   // LED will turn on or off when button is pressed and released.
+   while (1) {
+      if (!BSTATE && gpio_get_level(BUTTON)) {
+        BSTATE = true;
+        delay_ms(50);
+      }
+      if (BSTATE && !gpio_get_level(BUTTON)) {
+        LSTATE = !LSTATE;
+        gpio_set_level(LED_GPIO, LSTATE);
+        BSTATE = false;
+        delay_ms(50);
+      }
+    esp_task_wdt_reset();
+}
