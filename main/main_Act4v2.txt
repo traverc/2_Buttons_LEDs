@@ -1,0 +1,46 @@
+#include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
+
+
+// A function to specify delays in milliseconds
+void delay_ms(int t) {
+  vTaskDelay(t /portTICK_PERIOD_MS);
+}
+
+
+#define LED_GPIO GPIO_NUM_10
+#define BUTTON GPIO_NUM_4
+#define LOOP_DELAY_MS 25
+
+
+bool bstate = false;   // Button state (true = pressed, false = not pressed)
+bool lstate = false;   // LED state (true = ON, false = OFF)
+bool pressed;          // Flag to indicate a button press event
+
+
+void app_main(void)
+{
+  gpio_reset_pin(LED_GPIO);
+  gpio_set_direction(LED_GPIO, GPIO_MODE_OUTPUT);
+  gpio_set_level(LED_GPIO, 0);
+ 
+  gpio_reset_pin(BUTTON);
+  gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
+  gpio_pullup_en(BUTTON);
+ 
+  while (1) {                                 // Loop forever
+    pressed = gpio_get_level(BUTTON) == 0;     // Input active low button
+   
+    if (!bstate && pressed) {                  // Released button, is now pressed
+      bstate = true;                           // Remember button is pressed  
+    }
+   
+    if (bstate && !pressed) {                  // Pressed button, is now released
+      lstate = !lstate;                        // Toggle LED state  
+      bstate = false;                          // Remember button is released
+    }
+   
+    gpio_set_level(LED_GPIO, lstate);          // Output LED state
+    delay_ms(LOOP_DELAY_MS);
+  }
+}
